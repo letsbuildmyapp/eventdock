@@ -1,0 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --paper: 252 250 244;
+  --panel: 255 255 255;
+  --ink: 18 18 27;
+  --muted: 88 88 105;
+  --subtle: 130 130 150;
+  --line: 226 224 215;
+  --primary: 37 99 255;
+  --primary-hover: 24 76 220;
+  --accent: 234 245 60;
+  --accent-ink: 28 28 18;
+  --danger: 230 64 64;
+  --success: 32 158 92;
+}
+
+.dark {
+  --paper: 16 16 22;
+  --panel: 24 24 32;
+  --ink: 244 244 248;
+  --muted: 170 170 185;
+  --subtle: 130 130 150;
+  --line: 44 44 56;
+  --primary: 88 138 255;
+  --primary-hover: 124 162 255;
+  --accent: 234 245 60;
+  --accent-ink: 28 28 18;
+  --danger: 240 96 96;
+  --success: 56 192 116;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { min-height: 100%; margin: 0; }
+
+body {
+  font-family: 'Manrope', system-ui, sans-serif;
+  background: rgb(var(--paper));
+  color: rgb(var(--ink));
+  -webkit-font-smoothing: antialiased;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+  letter-spacing: -0.02em;
+  color: rgb(var(--ink));
+}
+
+button { font-family: inherit; cursor: pointer; }
+
+::selection { background: rgb(var(--accent)); color: rgb(var(--accent-ink)); }
+
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  padding: 0 6px;
+  height: 22px;
+  border: 1px solid rgb(var(--line));
+  border-radius: 6px;
+  background: rgb(var(--panel));
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 11px;
+  color: rgb(var(--muted));
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 h-11 px-5 rounded-2xl bg-primary text-white font-semibold border-2 border-ink shadow-[4px_4px_0_0_rgb(var(--ink))] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_rgb(var(--ink))] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all;
+  }
+  .btn-accent {
+    @apply inline-flex items-center justify-center gap-2 h-11 px-5 rounded-2xl bg-accent text-accent-ink font-semibold border-2 border-ink shadow-[4px_4px_0_0_rgb(var(--ink))] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_rgb(var(--ink))] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 h-11 px-5 rounded-2xl bg-panel text-ink font-semibold border-2 border-ink hover:bg-paper transition-colors;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 h-11 px-5 rounded-2xl bg-danger text-white font-semibold border-2 border-ink shadow-[4px_4px_0_0_rgb(var(--ink))] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_rgb(var(--ink))] transition-all;
+  }
+  .btn-quiet {
+    @apply inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl text-ink font-medium hover:bg-line/40 transition-colors;
+  }
+  .input {
+    @apply w-full h-11 px-4 rounded-xl bg-panel border-2 border-ink/20 focus:border-ink focus:outline-none transition-colors text-ink placeholder:text-subtle;
+  }
+  .input-lg {
+    @apply w-full h-12 px-4 rounded-2xl bg-panel border-2 border-ink/20 focus:border-ink focus:outline-none transition-colors text-ink placeholder:text-subtle;
+  }
+  .textarea {
+    @apply w-full p-4 rounded-2xl bg-panel border-2 border-ink/20 focus:border-ink focus:outline-none transition-colors text-ink placeholder:text-subtle resize-none;
+  }
+  .card {
+    @apply rounded-3xl border-2 border-ink bg-panel shadow-[4px_4px_0_0_rgb(var(--ink))];
+  }
+  .card-flat {
+    @apply rounded-3xl border-2 border-ink bg-panel;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 h-7 px-3 rounded-full border border-ink/30 bg-panel text-xs font-bold uppercase tracking-wider;
+  }
+  .chip-accent {
+    @apply inline-flex items-center gap-1.5 h-7 px-3 rounded-full border-2 border-ink bg-accent text-accent-ink text-xs font-bold uppercase tracking-wider;
+  }
+  .chip-primary {
+    @apply inline-flex items-center gap-1.5 h-7 px-3 rounded-full border-2 border-ink bg-primary text-white text-xs font-bold uppercase tracking-wider;
+  }
+}
+
+.tabular { font-variant-numeric: tabular-nums; }

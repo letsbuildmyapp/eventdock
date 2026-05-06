@@ -1,0 +1,11 @@
+{
+  "projects": { "default": "demo-eventdock" },
+  "targets": {
+    "demo-eventdock": {
+      "hosting": {
+        "staging": ["demo-eventdock-staging"],
+        "production": ["demo-eventdock"]
+      }
+    }
+  }
+}
