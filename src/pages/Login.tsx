@@ -1,132 +1,149 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Logo } from '../components/Logo';
 import { useAuth } from '../lib/auth';
-import { Sparkles, ArrowRight, Calendar, ScanLine, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Loader2, UserRound, Megaphone, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Role } from '../lib/types';
 
-type Tile = {
-  id: string;
-  role: Role;
-  name: string;
-  blurb: string;
-  initials: string;
-  Icon: React.ComponentType<{ size?: number; className?: string }>;
-};
+const DEMO_PASSWORD = 'demo1234';
 
-const TILES: Tile[] = [
-  {
-    id: 'u_attendee',
-    role: 'attendee',
-    name: 'Sam Rivera',
-    blurb: 'Browse events, RSVP, keep your QR tickets in one place.',
-    initials: 'SR',
-    Icon: Calendar,
-  },
-  {
-    id: 'u_organizer',
-    role: 'organizer',
-    name: 'Maya Chen',
-    blurb: 'Run events end-to-end — guests, schedule, vendors, check-in.',
-    initials: 'MC',
-    Icon: ScanLine,
-  },
-  {
-    id: 'u_admin',
-    role: 'admin',
-    name: 'Jordan Park',
-    blurb: 'Platform stats, every event, feature or suspend in one click.',
-    initials: 'JP',
-    Icon: ShieldCheck,
-  },
+const DEMO_LOGINS: { email: string; password: string; label: string; description: string; role: Role; icon: any; color: string }[] = [
+  { email: 'attendee@eventdock.demo', password: DEMO_PASSWORD, label: 'Sam Rivera', description: 'Attendee · find events', role: 'attendee', icon: UserRound, color: 'from-emerald-500 to-teal-500' },
+  { email: 'organizer@eventdock.demo', password: DEMO_PASSWORD, label: 'Maya Chen', description: 'Organizer · run events', role: 'organizer', icon: Megaphone, color: 'from-amber-500 to-orange-500' },
+  { email: 'admin@eventdock.demo', password: DEMO_PASSWORD, label: 'Jordan Park', description: 'Admin · platform control', role: 'admin', icon: ShieldCheck, color: 'from-indigo-500 to-violet-500' },
 ];
+
+const routeFor = (r: Role) => (r === 'admin' ? '/app/admin' : r === 'organizer' ? '/app/organize' : '/app');
 
 export default function Login() {
   const auth = useAuth();
   const nav = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState<string | null>(null);
 
-  function pick(tile: Tile) {
-    const u = auth.signInAs(tile.id);
-    toast.success(`Welcome, ${u.name.split(' ')[0]}`);
-    const next =
-      u.role === 'admin' ? '/app/admin' :
-      u.role === 'organizer' ? '/app/organize' :
-      '/app';
-    nav(next);
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const u = await auth.signIn(email, password);
+      toast.success(`Welcome back, ${u.name.split(' ')[0]}`);
+      nav(routeFor(u.role));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onDemoLogin(d: (typeof DEMO_LOGINS)[number]) {
+    setEmail(d.email);
+    setPassword(d.password);
+    setDemoLoading(d.email);
+    try {
+      const u = await auth.signIn(d.email, d.password);
+      toast.success(`Signed in as ${u.name}`);
+      nav(routeFor(u.role));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Sign-in failed');
+    } finally {
+      setDemoLoading(null);
+    }
   }
 
   return (
-    <div className="min-h-screen bg-paper">
-      <header className="px-5 sm:px-8 py-6 max-w-7xl mx-auto">
+    <div className="relative flex min-h-screen flex-col bg-paper">
+      <header className="relative z-10 flex items-center justify-between px-6 py-5 sm:px-10">
         <Logo />
+        <span className="text-xs text-muted">
+          Need help?{' '}
+          <a href="mailto:hello@letsbuildmyapp.com?subject=EventDock%20support" className="text-ink underline-offset-4 hover:underline">
+            Contact support
+          </a>
+        </span>
       </header>
 
-      <main className="px-5 sm:px-8 pt-4 pb-16 max-w-6xl mx-auto grid lg:grid-cols-[1.05fr_1fr] gap-12 items-start">
-        {/* LEFT — pitch */}
-        <motion.section
-          initial={{ opacity: 0, y: 12 }}
+      <main className="relative z-10 flex flex-1 items-center justify-center px-6 py-10">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="lg:pr-6"
+          transition={{ duration: 0.3 }}
+          className="w-full max-w-[440px]"
         >
-          <span className="chip-accent">
-            <Sparkles size={12} /> Pick a role to enter
-          </span>
-          <h1 className="font-display font-extrabold text-5xl sm:text-6xl lg:text-7xl mt-6 leading-[0.95] tracking-tight text-ink">
-            Run the event.<br />
-            <span className="relative inline-block">
-              <span className="relative z-10">Skip the busywork.</span>
-              <span className="absolute -bottom-1 left-0 right-0 h-3 bg-accent -z-0 -rotate-1 rounded" />
-            </span>
-          </h1>
-          <p className="mt-6 text-lg text-muted max-w-prose leading-relaxed">
-            EventDock is a portfolio demo for letsbuildmyapp.com. Pick the role you'd like to walk through —
-            your session lives in this browser tab and resets via <em>Reset demo</em> in the footer.
-          </p>
-        </motion.section>
+          <div className="card p-7 sm:p-9 shadow-2xl">
+            <div className="space-y-1.5">
+              <h1 className="font-display font-extrabold text-3xl tracking-tight">Sign in to EventDock</h1>
+              <p className="text-sm text-muted">
+                New here?{' '}
+                <Link to="/signup" className="font-semibold text-ink underline-offset-4 hover:underline">
+                  Create an account
+                </Link>
+              </p>
+            </div>
 
-        {/* RIGHT — role tiles */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.05 }}
-          className="space-y-4"
-        >
-          {TILES.map((t) => {
-            const Icon = t.Icon;
-            return (
-              <motion.button
-                key={t.id}
-                whileHover={{ y: -2 }}
-                whileTap={{ y: 0 }}
-                transition={{ type: 'spring', stiffness: 360, damping: 24 }}
-                onClick={() => pick(t)}
-                className="w-full text-left card p-5 sm:p-6 flex items-center gap-5 hover:shadow-[8px_8px_0_0_rgb(var(--ink))] transition-shadow group"
-              >
-                <span className="h-14 w-14 shrink-0 rounded-2xl border-2 border-ink bg-accent grid place-items-center font-display font-extrabold text-xl text-accent-ink shadow-[3px_3px_0_0_rgb(var(--ink))]">
-                  {t.initials}
-                </span>
-                <span className="flex-1 min-w-0">
-                  <span className="text-xs uppercase tracking-[0.14em] font-bold text-primary inline-flex items-center gap-1.5">
-                    <Icon size={12} /> {t.role}
-                  </span>
-                  <span className="block font-display font-bold text-2xl mt-0.5 leading-tight">
-                    {t.name}
-                  </span>
-                  <span className="block text-sm text-muted mt-1.5 leading-relaxed">
-                    {t.blurb}
-                  </span>
-                </span>
-                <ArrowRight className="text-muted group-hover:text-ink group-hover:translate-x-1 transition-all shrink-0" size={20} />
-              </motion.button>
-            );
-          })}
-          <p className="text-xs text-muted text-center pt-2">
-            <Link to="/" className="underline">Back to home</Link>
-          </p>
-        </motion.section>
+            <div className="my-6 grid gap-2">
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-[11px] uppercase tracking-[0.14em] font-bold text-muted">One-click demo logins</span>
+                <span className="text-[10px] text-muted">No password needed</span>
+              </div>
+              {DEMO_LOGINS.map((d) => (
+                <button
+                  key={d.email}
+                  type="button"
+                  onClick={() => onDemoLogin(d)}
+                  disabled={demoLoading !== null || loading}
+                  className="group flex items-center gap-3 rounded-2xl border-2 border-ink/15 bg-paper p-3 text-left transition-all hover:border-ink hover:shadow-[4px_4px_0_0_rgb(var(--ink))] hover:-translate-y-0.5 disabled:opacity-50"
+                >
+                  <div className={`flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br ${d.color} text-white shadow-sm`}>
+                    <d.icon className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-display font-bold text-base">{d.label}</div>
+                    <div className="truncate text-xs text-muted">{d.description}</div>
+                  </div>
+                  {demoLoading === d.email ? (
+                    <Loader2 size={14} className="animate-spin text-muted" />
+                  ) : (
+                    <ArrowRight size={14} className="text-muted transition-transform group-hover:translate-x-0.5" />
+                  )}
+                </button>
+              ))}
+            </div>
+
+            <div className="my-6 flex items-center gap-3">
+              <div className="h-px bg-ink/15 flex-1" />
+              <span className="text-[11px] uppercase tracking-wider font-bold text-muted">or sign in with email</span>
+              <div className="h-px bg-ink/15 flex-1" />
+            </div>
+
+            <form onSubmit={onSubmit} className="space-y-4">
+              <div>
+                <label className="text-[11px] uppercase tracking-[0.12em] font-bold text-muted block mb-1.5">Email</label>
+                <input type="email" autoComplete="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="you@eventdock.demo" />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[11px] uppercase tracking-[0.12em] font-bold text-muted">Password</label>
+                  <span className="text-[11px] text-muted">demo password is demo1234</span>
+                </div>
+                <input type="password" autoComplete="current-password" className="input" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} placeholder="••••••••" />
+              </div>
+              <button type="submit" className="btn-primary w-full" disabled={loading}>
+                {loading ? <Loader2 size={16} className="animate-spin" /> : (<>Sign in <ArrowRight size={16} /></>)}
+              </button>
+            </form>
+          </div>
+        </motion.div>
       </main>
+
+      <footer className="relative z-10 px-6 pb-8 text-center text-xs text-muted sm:px-10">
+        <a href="https://letsbuildmyapp.com" target="_blank" rel="noreferrer" className="font-medium text-ink underline-offset-4 hover:underline">
+          Let&apos;s Build My App
+        </a>
+      </footer>
     </div>
   );
 }
