@@ -1,18 +1,19 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Logo } from '../components/Logo';
-import { ArrowRight, Calendar, QrCode, ScanLine, Mail, Sparkles, Heart, Users } from 'lucide-react';
+import { ArrowRight, Calendar, QrCode, ScanLine, Mail, Sparkles, Heart, Users, Zap } from 'lucide-react';
 import { db } from '../lib/store';
 import { EventCard } from '../components/EventCard';
 import { useDbVersion } from '../lib/queries';
+import { ResetDemo } from '../components/ResetDemo';
 
 export default function Marketing() {
   useDbVersion();
   const featured = db.listEvents().filter(e => e.status === 'live' || e.status === 'featured').slice(0, 3);
 
   return (
-    <div className="min-h-screen bg-paper">
-      <header className="px-5 sm:px-8 py-6 max-w-7xl mx-auto flex items-center justify-between">
+    <div className="min-h-screen flex flex-col bg-paper">
+      <header className="px-5 sm:px-8 py-6 max-w-7xl mx-auto w-full flex items-center justify-between">
         <Logo />
         <div className="flex items-center gap-3">
           <Link to="/login" className="btn-quiet">Sign in</Link>
@@ -20,7 +21,7 @@ export default function Marketing() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-5 sm:px-8 pt-8 pb-24">
+      <main className="max-w-7xl mx-auto w-full px-5 sm:px-8 pt-8 pb-24 flex-1">
         <section className="grid lg:grid-cols-[1.1fr_1fr] gap-12 items-center">
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             <span className="chip-accent"><Sparkles size={12} /> Conferences · Weddings · Fundraisers</span>
@@ -48,7 +49,9 @@ export default function Marketing() {
           >
             <div className="card p-6 md:p-8 rotate-1 hover:rotate-0 transition-transform">
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-2xl border-2 border-ink bg-primary text-white grid place-items-center text-2xl">⚡</div>
+                <div className="h-12 w-12 rounded-2xl border-2 border-ink bg-primary text-white grid place-items-center">
+                  <Zap size={20} />
+                </div>
                 <div>
                   <div className="font-display font-bold text-lg">StackForward 2026</div>
                   <div className="text-sm text-muted">Brooklyn · 2 days · 320 capacity</div>
@@ -61,7 +64,7 @@ export default function Marketing() {
                 <Stat icon={ScanLine} label="Checked in" value="0" />
               </div>
               <div className="mt-6 h-32 rounded-2xl bg-paper border-2 border-ink/20 p-4">
-                <div className="text-[11px] uppercase tracking-wider font-bold text-muted">Today's reminders</div>
+                <div className="text-xs uppercase tracking-wider font-bold text-muted">Today's reminders</div>
                 <div className="mt-2 space-y-2">
                   <Row name="Dana Liu" code="EVT-XK4Q-MN29" />
                   <Row name="Tariq Wells" code="EVT-PB22-RC8L" />
@@ -69,8 +72,9 @@ export default function Marketing() {
                 </div>
               </div>
             </div>
-            <div className="absolute -top-6 -right-4 hidden md:block card p-4 -rotate-6 bg-accent">
-              <Heart size={20} className="inline" /> <span className="font-bold ml-1">142 RSVPs today</span>
+            <div className="absolute -top-6 -right-4 hidden md:flex card p-4 -rotate-6 bg-accent items-center gap-2">
+              <Heart size={18} className="text-accent-ink" />
+              <span className="font-bold text-accent-ink">142 RSVPs today</span>
             </div>
           </motion.div>
         </section>
@@ -80,7 +84,7 @@ export default function Marketing() {
             <h2 className="font-display text-3xl sm:text-4xl font-bold">Live events you can browse</h2>
             <Link to="/login" className="text-primary font-semibold inline-flex items-center gap-1 hover:gap-2 transition-all">All events <ArrowRight size={14} /></Link>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
             {featured.map(e => <EventCard key={e.id} event={e} />)}
           </div>
         </section>
@@ -93,10 +97,13 @@ export default function Marketing() {
         </section>
       </main>
 
-      <footer className="border-t-2 border-ink bg-panel">
+      <footer className="border-t-2 border-ink bg-panel mt-auto">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10 flex flex-wrap items-center justify-between gap-4 text-sm text-muted">
           <Logo />
-          <div>Built by <a href="https://letsbuildmyapp.com" className="font-semibold underline-offset-2 hover:underline">letsbuildmyapp.com</a></div>
+          <div className="flex items-center gap-6">
+            <ResetDemo />
+            <a href="https://letsbuildmyapp.com" className="font-semibold underline-offset-2 hover:underline">Built by letsbuildmyapp.com</a>
+          </div>
         </div>
       </footer>
     </div>
@@ -108,7 +115,7 @@ function Stat({ icon: Icon, label, value }: { icon: React.ComponentType<{ size?:
     <div className="rounded-2xl border-2 border-ink/20 p-3">
       <Icon size={14} className="text-muted" />
       <div className="font-display font-bold text-2xl mt-1 tabular">{value}</div>
-      <div className="text-[10px] uppercase tracking-wider text-muted font-bold">{label}</div>
+      <div className="text-xs uppercase tracking-wider text-muted font-bold">{label}</div>
     </div>
   );
 }

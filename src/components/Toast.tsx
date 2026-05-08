@@ -4,6 +4,7 @@ export function AppToaster() {
   return (
     <Toaster
       position="bottom-right"
+      closeButton
       toastOptions={{
         style: {
           background: 'rgb(var(--panel))',

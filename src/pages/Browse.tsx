@@ -4,7 +4,17 @@ import { useDbVersion } from '../lib/queries';
 import { EventCard } from '../components/EventCard';
 import { Search } from 'lucide-react';
 
-const CATEGORIES = ['all', 'conference', 'wedding', 'fundraiser'] as const;
+const CATEGORIES = ['all', 'conference', 'wedding', 'fundraiser', 'workshop', 'art_opening', 'brand_launch', 'fitness_retreat'] as const;
+const CAT_LABEL: Record<typeof CATEGORIES[number], string> = {
+  all: 'All',
+  conference: 'Conference',
+  wedding: 'Wedding',
+  fundraiser: 'Fundraiser',
+  workshop: 'Workshop',
+  art_opening: 'Art opening',
+  brand_launch: 'Brand launch',
+  fitness_retreat: 'Fitness retreat',
+};
 
 export default function Browse() {
   useDbVersion();
@@ -25,7 +35,7 @@ export default function Browse() {
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <div className="text-[11px] uppercase tracking-[0.14em] font-bold text-muted">Browse</div>
+          <div className="text-xs uppercase tracking-[0.14em] font-bold text-muted">Browse</div>
           <h1 className="font-display text-4xl sm:text-5xl font-extrabold mt-1">Pick your next thing.</h1>
         </div>
         <div className="text-sm text-muted">
@@ -33,14 +43,14 @@ export default function Browse() {
         </div>
       </div>
 
-      <div className="mt-8 flex flex-col sm:flex-row gap-3" data-tour="browse">
-        <div className="relative flex-1">
-          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
+      <div className="mt-8 grid sm:grid-cols-[minmax(280px,420px)_1fr] gap-4" data-tour="browse">
+        <div className="relative">
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search by title, place, vibe…"
-            className="input-lg pl-11"
+            className="input-lg pl-12 h-14 text-base"
           />
         </div>
         <div className="flex gap-2 overflow-x-auto">
@@ -48,15 +58,15 @@ export default function Browse() {
             <button
               key={c}
               onClick={() => setCat(c)}
-              className={`h-12 px-5 rounded-2xl border-2 font-semibold capitalize transition-all whitespace-nowrap ${
+              className={`h-12 px-5 rounded-2xl border-2 font-semibold transition-all whitespace-nowrap ${
                 cat === c ? 'bg-ink text-paper border-ink' : 'bg-panel border-ink/20 text-muted hover:border-ink/50'
               }`}
-            >{c}</button>
+            >{CAT_LABEL[c]}</button>
           ))}
         </div>
       </div>
 
-      <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
         {filtered.map(e => {
           const going = rsvps.filter(r => r.eventId === e.id && r.status !== 'cancelled').length;
           return <EventCard key={e.id} event={e} going={going} />;

@@ -1,11 +1,18 @@
 {
-  "projects": { "default": "demo-eventdock" },
+  "projects": {
+    "default": "eventdock-lbma"
+  },
   "targets": {
-    "demo-eventdock": {
+    "eventdock-lbma": {
       "hosting": {
-        "staging": ["demo-eventdock-staging"],
-        "production": ["demo-eventdock"]
+        "staging": [
+          "eventdock-lbma-staging"
+        ],
+        "production": [
+          "eventdock-lbma-prod"
+        ]
       }
     }
-  }
+  },
+  "etags": {}
 }

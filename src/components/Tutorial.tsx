@@ -275,7 +275,7 @@ export function Tutorial() {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 h-12 border-b-2 border-ink/10">
-          <span className="text-[11px] uppercase tracking-[0.12em] font-bold text-muted">
+          <span className="text-xs uppercase tracking-[0.12em] font-bold text-muted">
             Tour · <span className="tabular">{step + 1}</span> of <span className="tabular">{STEPS.length}</span>
           </span>
           <button onClick={close} className="text-muted hover:text-ink p-1.5 rounded-lg hover:bg-line/40" aria-label="Close tour">
@@ -328,7 +328,7 @@ function CenteredModal({
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between px-5 h-14 border-b-2 border-ink/10">
-            <span className="text-[11px] uppercase tracking-[0.12em] font-bold text-muted">
+            <span className="text-xs uppercase tracking-[0.12em] font-bold text-muted">
               Tour · <span className="tabular">{step + 1}</span> of <span className="tabular">{steps.length}</span>
             </span>
             <button onClick={onClose} className="text-muted hover:text-ink p-1.5 rounded-lg hover:bg-line/40" aria-label="Close tour">

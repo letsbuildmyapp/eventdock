@@ -1,10 +1,9 @@
 /**
- * Local persistence layer. Mirrors a Firestore-shaped API so swapping in
- * the real Firebase SDK later is a 1:1 change. All collections live in
- * localStorage under the `eventdock:db:` prefix and emit a CustomEvent on
- * mutation so components can subscribe.
+ * Local persistence layer. All collections live in localStorage under the
+ * `eventdock:db:` prefix and emit a CustomEvent on mutation so components
+ * can subscribe via useDbVersion(). Shape mirrors a Firestore-style API.
  */
-import type { EventDoc, Rsvp, User } from './types';
+import type { EventDoc, Rsvp, User, Organization, Notification } from './types';
 
 const PREFIX = 'eventdock:db:';
 const EV = 'eventdock:db:changed';
@@ -13,6 +12,8 @@ type DB = {
   users: User[];
   events: EventDoc[];
   rsvps: Rsvp[];
+  organizations: Organization[];
+  notifications: Notification[];
 };
 
 function read<T>(key: keyof DB): T[] {
@@ -60,6 +61,7 @@ export const db = {
   listRsvpsByEvent: (eventId: string) => read<Rsvp>('rsvps').filter(r => r.eventId === eventId),
   listRsvpsByAttendee: (attendeeId: string) =>
     read<Rsvp>('rsvps').filter(r => r.attendeeId === attendeeId),
+  getRsvp: (id: string) => read<Rsvp>('rsvps').find(r => r.id === id),
   getRsvpByCode: (code: string) =>
     read<Rsvp>('rsvps').find(r => r.ticketCode.toLowerCase() === code.toLowerCase()),
   upsertRsvp: (r: Rsvp) => {
@@ -69,11 +71,34 @@ export const db = {
     write('rsvps', all);
   },
 
+  // ---------- organizations ----------
+  listOrganizations: () => read<Organization>('organizations'),
+  getOrganization: (id: string) => read<Organization>('organizations').find(o => o.id === id),
+  getOrganizationByOwner: (ownerId: string) =>
+    read<Organization>('organizations').find(o => o.ownerId === ownerId),
+  upsertOrganization: (o: Organization) => {
+    const all = read<Organization>('organizations');
+    const idx = all.findIndex(x => x.id === o.id);
+    if (idx >= 0) all[idx] = o; else all.push(o);
+    write('organizations', all);
+  },
+
+  // ---------- notifications ----------
+  listNotifications: (recipientId: string) =>
+    read<Notification>('notifications').filter(n => n.recipientId === recipientId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+  upsertNotification: (n: Notification) => {
+    const all = read<Notification>('notifications');
+    const idx = all.findIndex(x => x.id === n.id);
+    if (idx >= 0) all[idx] = n; else all.push(n);
+    write('notifications', all);
+  },
+
   // ---------- meta ----------
   reset: () => {
-    localStorage.removeItem(PREFIX + 'users');
-    localStorage.removeItem(PREFIX + 'events');
-    localStorage.removeItem(PREFIX + 'rsvps');
+    (['users', 'events', 'rsvps', 'organizations', 'notifications'] as (keyof DB)[]).forEach(k => {
+      localStorage.removeItem(PREFIX + k);
+    });
     window.dispatchEvent(new CustomEvent(EV));
   },
 
@@ -87,3 +112,21 @@ export const db = {
     };
   },
 };
+
+// ---------- helpers used across the app ----------
+export const TIER_LIMITS = {
+  starter: { ai: false, customBranding: false, label: 'Starter' },
+  pro: { ai: true, customBranding: true, label: 'Pro' },
+  scale: { ai: true, customBranding: true, label: 'Scale' },
+} as const;
+
+export const TIER_PRICING = {
+  starter: { monthlyCents: 0, blurb: 'Free forever for the first event.' },
+  pro: { monthlyCents: 2900, blurb: 'For organizers running events monthly.' },
+  scale: { monthlyCents: 9900, blurb: 'For agencies and venues with full calendars.' },
+} as const;
+
+export function aiUnlocked(tier?: import('./types').OrgTier | null): boolean {
+  if (!tier) return false;
+  return TIER_LIMITS[tier].ai;
+}

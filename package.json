@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy:staging": "npm run build && firebase deploy --only hosting:staging",
+    "deploy:prod": "npm run build && firebase deploy --only hosting:production"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.100.9",

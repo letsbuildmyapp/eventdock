@@ -4,70 +4,79 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --paper: 252 250 244;
-  --panel: 255 255 255;
-  --ink: 18 18 27;
-  --muted: 88 88 105;
-  --subtle: 130 130 150;
-  --line: 226 224 215;
-  --primary: 37 99 255;
-  --primary-hover: 24 76 220;
-  --accent: 234 245 60;
-  --accent-ink: 28 28 18;
-  --danger: 230 64 64;
-  --success: 32 158 92;
+@layer base {
+  :root {
+    --paper: 252 250 244;
+    --panel: 255 255 255;
+    --ink: 18 18 27;
+    --muted: 88 88 105;
+    --subtle: 100 100 118;
+    --line: 226 224 215;
+    --primary: 37 99 255;
+    --primary-hover: 24 76 220;
+    --accent: 234 245 60;
+    --accent-ink: 28 28 18;
+    --danger: 200 46 46;
+    --success: 32 158 92;
+  }
+
+  .dark {
+    --paper: 16 16 22;
+    --panel: 24 24 32;
+    --ink: 244 244 248;
+    --muted: 170 170 185;
+    --subtle: 130 130 150;
+    --line: 44 44 56;
+    --primary: 88 138 255;
+    --primary-hover: 124 162 255;
+    --accent: 234 245 60;
+    --accent-ink: 28 28 18;
+    --danger: 240 96 96;
+    --success: 56 192 116;
+  }
+
+  * { box-sizing: border-box; }
+  html, body, #root { min-height: 100%; margin: 0; }
+
+  body {
+    font-family: 'Manrope', system-ui, sans-serif;
+    background: rgb(var(--paper));
+    color: rgb(var(--ink));
+    -webkit-font-smoothing: antialiased;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  /* h1-h4 inherit ink color by default. .font-display does NOT set color so
+     Tailwind text-* utilities (e.g. text-paper on a dark button) win. */
+  h1, h2, h3, h4 {
+    font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+    letter-spacing: -0.02em;
+    color: rgb(var(--ink));
+  }
+  .font-display {
+    font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  button { font-family: inherit; cursor: pointer; }
+
+  ::selection { background: rgb(var(--accent)); color: rgb(var(--accent-ink)); }
 }
-
-.dark {
-  --paper: 16 16 22;
-  --panel: 24 24 32;
-  --ink: 244 244 248;
-  --muted: 170 170 185;
-  --subtle: 130 130 150;
-  --line: 44 44 56;
-  --primary: 88 138 255;
-  --primary-hover: 124 162 255;
-  --accent: 234 245 60;
-  --accent-ink: 28 28 18;
-  --danger: 240 96 96;
-  --success: 56 192 116;
-}
-
-* { box-sizing: border-box; }
-html, body, #root { min-height: 100%; margin: 0; }
-
-body {
-  font-family: 'Manrope', system-ui, sans-serif;
-  background: rgb(var(--paper));
-  color: rgb(var(--ink));
-  -webkit-font-smoothing: antialiased;
-  font-size: 16px;
-  line-height: 1.5;
-}
-
-h1, h2, h3, h4, .font-display {
-  font-family: 'Bricolage Grotesque', system-ui, sans-serif;
-  letter-spacing: -0.02em;
-  color: rgb(var(--ink));
-}
-
-button { font-family: inherit; cursor: pointer; }
-
-::selection { background: rgb(var(--accent)); color: rgb(var(--accent-ink)); }
 
 .kbd {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 22px;
-  padding: 0 6px;
-  height: 22px;
+  min-width: 24px;
+  padding: 0 7px;
+  height: 24px;
   border: 1px solid rgb(var(--line));
   border-radius: 6px;
   background: rgb(var(--panel));
   font-family: ui-monospace, SFMono-Regular, monospace;
-  font-size: 11px;
+  font-size: 12px;
+  letter-spacing: 0.05em;
   color: rgb(var(--muted));
 }
 
@@ -93,6 +102,9 @@ button { font-family: inherit; cursor: pointer; }
   .input-lg {
     @apply w-full h-12 px-4 rounded-2xl bg-panel border-2 border-ink/20 focus:border-ink focus:outline-none transition-colors text-ink placeholder:text-subtle;
   }
+  .input-date {
+    @apply w-full h-11 px-3 rounded-xl bg-panel border-2 border-ink/20 focus:border-ink focus:outline-none transition-colors text-ink text-sm tabular;
+  }
   .textarea {
     @apply w-full p-4 rounded-2xl bg-panel border-2 border-ink/20 focus:border-ink focus:outline-none transition-colors text-ink placeholder:text-subtle resize-none;
   }
@@ -111,6 +123,22 @@ button { font-family: inherit; cursor: pointer; }
   .chip-primary {
     @apply inline-flex items-center gap-1.5 h-7 px-3 rounded-full border-2 border-ink bg-primary text-white text-xs font-bold uppercase tracking-wider;
   }
+  /* Solid dark chip for use on top of photos / colored backgrounds */
+  .chip-ink {
+    @apply inline-flex items-center gap-1.5 h-7 px-3 rounded-full border-2 border-ink bg-ink text-paper text-xs font-bold uppercase tracking-wider;
+  }
 }
 
 .tabular { font-variant-numeric: tabular-nums; }
+
+/* Style the native datetime-local picker icon so it doesn't clash */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(0);
+  opacity: 0.6;
+}
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}

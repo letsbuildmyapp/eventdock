@@ -52,7 +52,7 @@ export default function AdminDashboard() {
       <div className="flex items-center gap-3">
         <div className="h-12 w-12 rounded-2xl bg-ink text-paper grid place-items-center"><ShieldCheck size={20} /></div>
         <div>
-          <div className="text-[11px] uppercase tracking-[0.14em] font-bold text-muted">Admin</div>
+          <div className="text-xs uppercase tracking-[0.14em] font-bold text-muted">Admin</div>
           <h1 className="font-display text-3xl sm:text-4xl font-extrabold leading-tight">Platform overview</h1>
         </div>
       </div>
@@ -65,18 +65,18 @@ export default function AdminDashboard() {
       </div>
 
       <div className="mt-10" data-tour="admin-table">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <h2 className="font-display font-bold text-2xl">All events</h2>
-          <div className="relative">
+          <div className="relative w-full sm:w-72">
             <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-            <input className="input pl-10 w-72" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search events, organizers" />
+            <input className="input pl-10 w-full" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search events, organizers" />
           </div>
         </div>
 
-        <div className="card overflow-hidden">
+        <div className="card overflow-hidden hidden md:block">
           <table className="w-full">
             <thead>
-              <tr className="bg-paper border-b-2 border-ink/10 text-[10px] uppercase tracking-wider font-bold text-muted">
+              <tr className="bg-paper border-b-2 border-ink/10 text-xs uppercase tracking-wider font-bold text-muted">
                 <th className="text-left px-5 py-3">Event</th>
                 <th className="text-left px-5 py-3">Organizer</th>
                 <th className="text-left px-5 py-3">Date</th>
@@ -93,24 +93,27 @@ export default function AdminDashboard() {
                   <tr key={e.id} className="border-t border-ink/10 text-sm hover:bg-paper transition-colors">
                     <td className="px-5 py-4">
                       <Link to={`/e/${e.slug}`} className="font-semibold hover:underline inline-flex items-center gap-2">
-                        <span className="text-xl">{e.emoji}</span> {e.title}
+                        <span className="size-8 rounded-lg border-2 border-ink overflow-hidden bg-paper inline-block shrink-0 align-middle">
+                          <img src={e.coverImage} alt="" className="w-full h-full object-cover" />
+                        </span>
+                        {e.title}
                       </Link>
                       <div className="text-xs text-muted mt-0.5">{e.location}</div>
                     </td>
                     <td className="px-5 py-4">{org?.name ?? '—'}</td>
-                    <td className="px-5 py-4 tabular">{format(new Date(e.date), 'MMM d, yyyy')}</td>
+                    <td className="px-5 py-4 tabular whitespace-nowrap">{format(new Date(e.date), 'MMM d, yyyy')}</td>
                     <td className="px-5 py-4 text-right tabular font-semibold">{evRsvps}</td>
                     <td className="px-5 py-4">
-                      {e.status === 'featured' && <span className="chip-accent !h-6 !text-[10px]">Featured</span>}
-                      {e.status === 'live' && <span className="chip !h-6 !text-[10px]">Live</span>}
-                      {e.status === 'suspended' && <span className="chip !h-6 !text-[10px] !bg-danger !text-white !border-danger">Suspended</span>}
-                      {e.status === 'draft' && <span className="chip !h-6 !text-[10px]">Draft</span>}
+                      {e.status === 'featured' && <span className="chip-accent !h-6 !text-xs">Featured</span>}
+                      {e.status === 'live' && <span className="chip !h-6 !text-xs">Live</span>}
+                      {e.status === 'suspended' && <span className="chip !h-6 !text-xs !bg-danger !text-white !border-danger">Suspended</span>}
+                      {e.status === 'draft' && <span className="chip !h-6 !text-xs">Draft</span>}
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex justify-end gap-1">
                         <button
                           onClick={() => feature(e.id)}
-                          className={`h-9 w-9 rounded-xl border-2 grid place-items-center transition-colors ${e.status === 'featured' ? 'border-ink bg-accent' : 'border-ink/20 hover:border-ink'}`}
+                          className={`h-9 w-9 rounded-xl border-2 grid place-items-center transition-colors ${e.status === 'featured' ? 'border-ink bg-accent text-accent-ink' : 'border-ink/20 hover:border-ink'}`}
                           aria-label="Feature"
                           title={e.status === 'featured' ? 'Unfeature' : 'Feature'}
                         >
@@ -133,6 +136,54 @@ export default function AdminDashboard() {
           </table>
           {filtered.length === 0 && <div className="px-5 py-8 text-center text-sm text-muted">No events match.</div>}
         </div>
+
+        {/* Mobile cards */}
+        <div className="md:hidden space-y-3">
+          {filtered.map(e => {
+            const org = users.find(u => u.id === e.organizerId);
+            const evRsvps = rsvps.filter(r => r.eventId === e.id && r.status !== 'cancelled').length;
+            return (
+              <div key={e.id} className="card p-4">
+                <div className="flex items-start gap-3">
+                  <span className="size-10 rounded-lg border-2 border-ink overflow-hidden bg-paper shrink-0">
+                    <img src={e.coverImage} alt="" className="w-full h-full object-cover" />
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <Link to={`/e/${e.slug}`} className="font-semibold hover:underline block leading-tight">
+                      {e.title}
+                    </Link>
+                    <div className="text-xs text-muted mt-0.5 truncate">{org?.name ?? '—'} · {e.location}</div>
+                    <div className="text-xs text-muted mt-0.5 tabular">{format(new Date(e.date), 'MMM d, yyyy')}</div>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="chip !h-6 !text-xs tabular"><span className="font-semibold">{evRsvps}</span>&nbsp;RSVPs</span>
+                    {e.status === 'featured' && <span className="chip-accent !h-6 !text-xs">Featured</span>}
+                    {e.status === 'suspended' && <span className="chip !h-6 !text-xs !bg-danger !text-white !border-danger">Suspended</span>}
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <button
+                      onClick={() => feature(e.id)}
+                      className={`h-9 w-9 rounded-xl border-2 grid place-items-center transition-colors ${e.status === 'featured' ? 'border-ink bg-accent text-accent-ink' : 'border-ink/20 hover:border-ink'}`}
+                      aria-label="Feature"
+                    >
+                      <Star size={14} />
+                    </button>
+                    <button
+                      onClick={() => suspend(e.id)}
+                      className={`h-9 w-9 rounded-xl border-2 grid place-items-center transition-colors ${e.status === 'suspended' ? 'border-danger bg-danger/15 text-danger' : 'border-ink/20 hover:border-danger hover:text-danger'}`}
+                      aria-label="Suspend"
+                    >
+                      {e.status === 'suspended' ? <Play size={14} /> : <Pause size={14} />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          {filtered.length === 0 && <div className="px-5 py-8 text-center text-sm text-muted">No events match.</div>}
+        </div>
       </div>
     </div>
   );
@@ -143,7 +194,7 @@ function Stat({ icon: Icon, label, value }: { icon: React.ComponentType<{ size?:
     <div className="card p-5">
       <Icon size={16} className="text-muted" />
       <div className="font-display font-extrabold text-3xl mt-2 tabular">{value}</div>
-      <div className="text-[11px] uppercase tracking-wider font-bold text-muted mt-0.5">{label}</div>
+      <div className="text-xs uppercase tracking-wider font-bold text-muted mt-0.5">{label}</div>
     </div>
   );
 }

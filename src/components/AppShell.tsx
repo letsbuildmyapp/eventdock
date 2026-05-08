@@ -1,8 +1,9 @@
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { Logo } from './Logo';
 import { useAuth } from '../lib/auth';
-import { Calendar, Ticket, LayoutDashboard, ScanLine, ShieldCheck, LogOut, Sun, Moon, Plus } from 'lucide-react';
+import { Calendar, Ticket, LayoutDashboard, ScanLine, ShieldCheck, LogOut, Sun, Moon, Plus, CreditCard, Mail } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { ResetDemo } from './ResetDemo';
 
 function useTheme() {
   const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'));
@@ -37,9 +38,11 @@ export function AppShell() {
       { to: '/app/organize', label: 'My events', icon: LayoutDashboard, end: true, tour: 'nav-events' },
       { to: '/app/organize/new', label: 'Create', icon: Plus, tour: 'new-event' },
       { to: '/app/organize/checkin', label: 'Check-in', icon: ScanLine, tour: 'nav-checkin' },
+      { to: '/app/organize/billing', label: 'Billing', icon: CreditCard, tour: 'nav-billing' },
     ];
     if (role === 'admin') return [
       { to: '/app/admin', label: 'Dashboard', icon: ShieldCheck, end: true, tour: 'admin-nav' },
+      { to: '/app/admin/outbox', label: 'Outbox', icon: Mail, tour: 'admin-outbox' },
     ];
     return [];
   })();
@@ -50,7 +53,7 @@ export function AppShell() {
   }
 
   return (
-    <div className="min-h-screen bg-paper text-ink">
+    <div className="min-h-screen flex flex-col bg-paper text-ink">
       <header className="sticky top-0 z-40 border-b-2 border-ink bg-paper/95 backdrop-blur-sm">
         <div className="mx-auto max-w-7xl px-5 sm:px-8 h-16 flex items-center gap-6">
           <Logo to={role === 'admin' ? '/app/admin' : role === 'organizer' ? '/app/organize' : '/app'} />
@@ -78,9 +81,9 @@ export function AppShell() {
             <div className="hidden sm:flex items-center gap-3 pl-3 border-l-2 border-line h-8">
               <div className="text-right">
                 <div className="text-sm font-semibold leading-tight">{auth.user?.name}</div>
-                <div className="text-[11px] uppercase tracking-wider text-muted font-bold">{role}</div>
+                <div className="text-xs uppercase tracking-wider text-muted font-bold">{role}</div>
               </div>
-              <button onClick={signOut} className="btn-quiet h-10 w-10 px-0" aria-label="Sign out">
+              <button onClick={signOut} className="btn-quiet h-10 w-10 px-0" aria-label="Switch role" title="Switch role">
                 <LogOut size={16} />
               </button>
             </div>
@@ -105,20 +108,25 @@ export function AppShell() {
               </NavLink>
             ))}
             <button onClick={signOut} className="ml-auto inline-flex items-center gap-2 h-10 px-4 rounded-xl text-sm font-semibold text-muted">
-              <LogOut size={15} /> Sign out
+              <LogOut size={15} /> Switch role
             </button>
           </div>
         </nav>
       </header>
-      <main className="mx-auto max-w-7xl px-5 sm:px-8 py-8 sm:py-12">
+      <main className="mx-auto max-w-7xl w-full px-5 sm:px-8 py-8 sm:py-12 flex-1">
         <Outlet />
       </main>
-      <footer className="border-t-2 border-ink bg-panel mt-16">
+      <footer className="border-t-2 border-ink bg-panel mt-auto">
         <div className="mx-auto max-w-7xl px-5 sm:px-8 py-8 flex flex-wrap items-center justify-between gap-4 text-sm text-muted">
           <div className="flex items-center gap-3">
             <Logo to="/" />
           </div>
-          <div>Built by <Link to="https://letsbuildmyapp.com" className="font-semibold underline-offset-2 hover:underline">letsbuildmyapp.com</Link></div>
+          <div className="flex items-center gap-5">
+            <ResetDemo />
+            <a href="https://letsbuildmyapp.com" className="font-semibold underline-offset-2 hover:underline">
+              Built by letsbuildmyapp.com
+            </a>
+          </div>
         </div>
       </footer>
     </div>

@@ -3,7 +3,8 @@ import { db } from '../lib/store';
 import { useDbVersion } from '../lib/queries';
 import { useAuth } from '../lib/auth';
 import { format } from 'date-fns';
-import { ScanLine, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ScanLine, CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -50,14 +51,23 @@ export default function CheckIn() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="text-[11px] uppercase tracking-[0.14em] font-bold text-muted">Check-in</div>
+      {eventToUse && auth.user.role === 'organizer' ? (
+        <Link to={`/app/organize/${eventToUse.id}`} className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink mb-4">
+          <ArrowLeft size={14} /> Back to {eventToUse.title}
+        </Link>
+      ) : (
+        <Link to={auth.user.role === 'admin' ? '/app/admin' : '/app/organize'} className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink mb-4">
+          <ArrowLeft size={14} /> Back
+        </Link>
+      )}
+      <div className="text-xs uppercase tracking-[0.14em] font-bold text-muted">Check-in</div>
       <h1 className="font-display text-4xl font-extrabold mt-1">Door scanner</h1>
 
       <div className="mt-6 card p-5">
-        <label className="text-[11px] uppercase tracking-[0.12em] font-bold text-muted">Event</label>
+        <label className="text-xs uppercase tracking-[0.12em] font-bold text-muted">Event</label>
         <select value={eventToUse?.id ?? ''} onChange={(e) => setEventId(e.target.value)} className="input-lg mt-1.5">
           {myEvents.map(e => (
-            <option key={e.id} value={e.id}>{e.emoji} {e.title} · {format(new Date(e.date), 'MMM d')}</option>
+            <option key={e.id} value={e.id}>{e.title} · {format(new Date(e.date), 'MMM d')}</option>
           ))}
         </select>
         {eventToUse && (
@@ -70,7 +80,7 @@ export default function CheckIn() {
       </div>
 
       <form onSubmit={submit} className="mt-6 card p-6">
-        <label className="text-[11px] uppercase tracking-[0.12em] font-bold text-muted">Ticket code</label>
+        <label className="text-xs uppercase tracking-[0.12em] font-bold text-muted">Ticket code</label>
         <div className="mt-2 flex gap-3">
           <div className="relative flex-1">
             <ScanLine size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
@@ -133,9 +143,9 @@ export default function CheckIn() {
 
 function Stat({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
   return (
-    <div className={`rounded-2xl border-2 p-3 ${highlight ? 'border-ink bg-accent' : 'border-ink/15 bg-paper'}`}>
+    <div className={`rounded-2xl border-2 p-3 ${highlight ? 'border-ink bg-accent text-accent-ink' : 'border-ink/15 bg-paper'}`}>
       <div className="font-display font-extrabold text-2xl tabular">{value}</div>
-      <div className="text-[10px] uppercase tracking-wider font-bold text-muted">{label}</div>
+      <div className={`text-xs uppercase tracking-wider font-bold ${highlight ? 'text-accent-ink/80' : 'text-muted'}`}>{label}</div>
     </div>
   );
 }

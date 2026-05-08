@@ -8,10 +8,19 @@ import { useState } from 'react';
 import { ticketCode, uid, formatMoney } from '../lib/utils';
 import { toast } from 'sonner';
 import { Logo } from '../components/Logo';
+import { CheckoutModal } from '../components/CheckoutModal';
+import { sendOrderConfirmation } from '../lib/email';
+import { QABot } from '../components/QABot';
+import { TicketModal } from '../components/TicketModal';
 
-const COVER_BG: Record<string, string> = {
-  primary: 'bg-primary text-white',
-  accent: 'bg-accent text-accent-ink',
+const CAT_LABEL: Record<string, string> = {
+  conference: 'Conference',
+  wedding: 'Wedding',
+  fundraiser: 'Fundraiser',
+  workshop: 'Workshop',
+  art_opening: 'Art opening',
+  brand_launch: 'Brand launch',
+  fitness_retreat: 'Fitness retreat',
 };
 
 export default function EventPublic() {
@@ -21,6 +30,8 @@ export default function EventPublic() {
   const nav = useNavigate();
   const event = slug ? db.getEventBySlug(slug) : undefined;
   const [rsvping, setRsvping] = useState<string | null>(null);
+  const [paying, setPaying] = useState<{ ttId: string; priceCents: number; name: string } | null>(null);
+  const [showTicket, setShowTicket] = useState(false);
 
   if (!event) {
     return (
@@ -35,18 +46,17 @@ export default function EventPublic() {
   }
 
   const rsvps = db.listRsvpsByEvent(event.id);
-  const going = rsvps.filter(r => r.status !== 'cancelled').length;
-  const myRsvp = auth.user ? rsvps.find(r => r.attendeeId === auth.user!.id && r.status !== 'cancelled') : undefined;
-  const cover = COVER_BG[event.coverColor] ?? COVER_BG.primary;
+  const going = rsvps.filter(r => r.status !== 'cancelled' && r.status !== 'refunded').length;
+  const myRsvp = auth.user ? rsvps.find(r => r.attendeeId === auth.user!.id && r.status !== 'cancelled' && r.status !== 'refunded') : undefined;
 
   function handleRsvp(ticketTypeId: string) {
     if (!auth.user) {
-      toast('Sign in first', { description: 'You need an account to RSVP.' });
+      toast('Pick a role first', { description: 'Choose an attendee tile to RSVP.' });
       nav('/login');
       return;
     }
     if (auth.user.role !== 'attendee') {
-      toast.error('Switch to an attendee account to RSVP.');
+      toast.error('Switch to the attendee role to RSVP.');
       return;
     }
     if (myRsvp) {
@@ -54,9 +64,15 @@ export default function EventPublic() {
       return;
     }
     const ev = event!;
+    const tt = ev.ticketTypes.find(t => t.id === ticketTypeId);
+    if (!tt) return;
+    if (tt.price > 0) {
+      setPaying({ ttId: ticketTypeId, priceCents: Math.round(tt.price * 100), name: tt.name });
+      return;
+    }
     setRsvping(ticketTypeId);
     setTimeout(() => {
-      db.upsertRsvp({
+      const r = {
         id: uid('rsvp_'),
         eventId: ev.id,
         attendeeId: auth.user!.id,
@@ -64,31 +80,72 @@ export default function EventPublic() {
         attendeeEmail: auth.user!.email,
         ticketTypeId,
         ticketCode: ticketCode(),
-        status: 'going',
+        status: 'going' as const,
         createdAt: new Date().toISOString(),
-      });
-      toast.success(`You're in. Ticket coming up.`);
+      };
+      db.upsertRsvp(r);
+      sendOrderConfirmation(ev, r);
+      toast.success('You\'re in. Ticket ready.', { description: 'Tap “View ticket” to see your QR code.' });
       setRsvping(null);
-      nav('/app/me');
     }, 350);
   }
 
+  function completePayment() {
+    if (!paying || !event || !auth.user) return;
+    const r = {
+      id: uid('rsvp_'),
+      eventId: event.id,
+      attendeeId: auth.user.id,
+      attendeeName: auth.user.name,
+      attendeeEmail: auth.user.email,
+      ticketTypeId: paying.ttId,
+      ticketCode: ticketCode(),
+      status: 'going' as const,
+      pricePaidCents: paying.priceCents,
+      paidAt: new Date().toISOString(),
+      refundStatus: 'none' as const,
+      createdAt: new Date().toISOString(),
+    };
+    db.upsertRsvp(r);
+    sendOrderConfirmation(event, r);
+    setPaying(null);
+    setShowTicket(true);
+  }
+
   return (
-    <div className="min-h-screen bg-paper">
-      <header className="px-5 sm:px-8 py-5 max-w-6xl mx-auto flex items-center justify-between">
+    <div className="min-h-screen flex flex-col bg-paper">
+      <header className="px-5 sm:px-8 py-5 max-w-6xl w-full mx-auto flex items-center justify-between">
         <Logo to={auth.user ? (auth.user.role === 'admin' ? '/app/admin' : auth.user.role === 'organizer' ? '/app/organize' : '/app') : '/'} />
-        {!auth.user && <Link to="/login" className="btn-primary h-10 px-4">Sign in</Link>}
+        <div className="flex items-center gap-3">
+          {auth.user ? (
+            <Link
+              to={auth.user.role === 'admin' ? '/app/admin' : auth.user.role === 'organizer' ? '/app/organize' : '/app'}
+              className="btn-ghost h-10 px-4 text-sm"
+            >
+              <ArrowLeft size={14} /> Back to {auth.user.role === 'attendee' ? 'browse' : 'dashboard'}
+            </Link>
+          ) : (
+            <>
+              <Link to="/" className="btn-quiet text-sm">Home</Link>
+              <Link to="/login" className="btn-primary h-10 px-4">Sign in</Link>
+            </>
+          )}
+        </div>
       </header>
 
-      <article className="max-w-6xl mx-auto px-5 sm:px-8 pb-24">
+      <article className="max-w-6xl w-full mx-auto px-5 sm:px-8 pb-24 flex-1">
         {/* Hero */}
-        <section className={`card overflow-hidden`}>
-          <div className={`${cover} relative h-72 md:h-96 border-b-2 border-ink overflow-hidden`}>
-            <div className="absolute inset-0 grid place-items-center">
-              <span className="text-[180px] md:text-[240px] leading-none">{event.emoji}</span>
-            </div>
+        <section className="card overflow-hidden">
+          <div className="relative h-72 md:h-96 border-b-2 border-ink overflow-hidden bg-paper">
+            <img
+              src={event.coverImage}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-x-0 top-0 h-32 pointer-events-none"
+                 style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 100%)' }} />
             <div className="absolute top-6 left-6 flex gap-2">
-              <span className="chip bg-paper">{event.category}</span>
+              <span className="chip-ink">{CAT_LABEL[event.category] ?? event.category}</span>
               {event.status === 'featured' && <span className="chip-accent">Featured</span>}
             </div>
           </div>
@@ -104,13 +161,11 @@ export default function EventPublic() {
 
         <div className="grid lg:grid-cols-[1fr_360px] gap-8 mt-10">
           <div className="space-y-10">
-            {/* About */}
             <section>
               <h2 className="font-display text-2xl font-bold">About</h2>
-              <p className="mt-3 text-muted text-lg leading-relaxed max-w-prose">{event.description}</p>
+              <p className="mt-3 text-muted text-lg leading-relaxed max-w-prose whitespace-pre-line">{event.description}</p>
             </section>
 
-            {/* Schedule */}
             {event.sessions.length > 0 && (
               <section>
                 <h2 className="font-display text-2xl font-bold">Schedule</h2>
@@ -118,7 +173,7 @@ export default function EventPublic() {
                   {event.sessions.map((s) => (
                     <li key={s.id} className="p-5 flex items-start gap-4">
                       <div className="h-10 w-10 rounded-xl border-2 border-ink bg-accent grid place-items-center shrink-0">
-                        <Clock size={16} />
+                        <Clock size={16} className="text-accent-ink" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-display font-bold text-lg leading-tight">{s.title}</div>
@@ -134,14 +189,13 @@ export default function EventPublic() {
               </section>
             )}
 
-            {/* Vendors */}
             {event.vendors.length > 0 && (
               <section>
                 <h2 className="font-display text-2xl font-bold">Vendors & partners</h2>
                 <div className="mt-4 grid sm:grid-cols-2 gap-3">
                   {event.vendors.map(v => (
                     <div key={v.id} className="card p-5">
-                      <div className="text-[10px] uppercase tracking-wider font-bold text-primary">{v.category}</div>
+                      <div className="text-xs uppercase tracking-wider font-bold text-primary">{v.category}</div>
                       <div className="font-display font-bold text-lg mt-1">{v.name}</div>
                       <div className="text-sm text-muted mt-1">{v.contact}</div>
                       {v.notes && <div className="text-sm text-muted mt-2 italic">"{v.notes}"</div>}
@@ -152,24 +206,26 @@ export default function EventPublic() {
             )}
           </div>
 
-          {/* RSVP rail */}
           <aside className="lg:sticky lg:top-8 self-start">
             <div className="card p-6">
-              <div className="text-[11px] uppercase tracking-[0.12em] font-bold text-muted">RSVP</div>
+              <div className="text-xs uppercase tracking-[0.12em] font-bold text-muted">RSVP</div>
               <div className="font-display font-bold text-2xl mt-1">Pick a ticket</div>
 
               {myRsvp ? (
                 <div className="mt-5 rounded-2xl bg-accent/30 border-2 border-ink p-4">
-                  <div className="text-[11px] uppercase tracking-wider font-bold">You're going</div>
+                  <div className="text-xs uppercase tracking-wider font-bold">You're going</div>
                   <div className="font-mono text-sm mt-1 tabular">{myRsvp.ticketCode}</div>
-                  <Link to="/app/me" className="btn-primary mt-4 w-full">View ticket <Ticket size={16} /></Link>
+                  <button onClick={() => setShowTicket(true)} className="btn-primary mt-4 w-full">
+                    View ticket <Ticket size={16} />
+                  </button>
                 </div>
               ) : (
                 <div className="mt-5 space-y-3">
                   {event.ticketTypes.map(tt => {
-                    const sold = rsvps.filter(r => r.ticketTypeId === tt.id && r.status !== 'cancelled').length;
+                    const sold = rsvps.filter(r => r.ticketTypeId === tt.id && r.status !== 'cancelled' && r.status !== 'refunded').length;
                     const left = tt.capacity - sold;
                     const soldOut = left <= 0;
+                    const isPaid = tt.price > 0;
                     return (
                       <div key={tt.id} className="rounded-2xl border-2 border-ink/20 p-4">
                         <div className="flex items-baseline justify-between">
@@ -184,7 +240,7 @@ export default function EventPublic() {
                           disabled={soldOut || rsvping !== null}
                           className="btn-primary w-full mt-3 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {rsvping === tt.id ? 'Booking…' : soldOut ? 'Sold out' : 'RSVP'}
+                          {rsvping === tt.id ? 'Booking…' : soldOut ? 'Sold out' : isPaid ? `Buy ticket — ${formatMoney(tt.price)}` : 'RSVP'}
                         </button>
                       </div>
                     );
@@ -198,6 +254,29 @@ export default function EventPublic() {
           </aside>
         </div>
       </article>
+
+      {paying && auth.user && (
+        <CheckoutModal
+          open
+          onClose={() => setPaying(null)}
+          onSuccess={completePayment}
+          amountCents={paying.priceCents}
+          email={auth.user.email}
+          description={`${event.title} · ${paying.name}`}
+          cta={`Pay ${formatMoney(paying.priceCents / 100)}`}
+        />
+      )}
+
+      {myRsvp && (
+        <TicketModal
+          open={showTicket}
+          onClose={() => setShowTicket(false)}
+          event={event}
+          rsvp={myRsvp}
+        />
+      )}
+
+      <QABot event={event} />
     </div>
   );
 }
@@ -205,7 +284,7 @@ export default function EventPublic() {
 function Detail({ icon: Icon, label, value, sub }: { icon: React.ComponentType<{ size?: number; className?: string }>; label: string; value: string; sub?: string }) {
   return (
     <div className="rounded-2xl border-2 border-ink/15 p-4 bg-paper">
-      <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-wider font-bold text-muted">
+      <div className="inline-flex items-center gap-2 text-xs uppercase tracking-wider font-bold text-muted">
         <Icon size={13} /> {label}
       </div>
       <div className="font-display font-bold text-lg mt-1 leading-tight">{value}</div>

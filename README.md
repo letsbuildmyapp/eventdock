@@ -1,71 +1,96 @@
 # EventDock
 
-Event management platform showcase for the LBMA portfolio. Conferences, weddings, and fundraisers — same toolkit, different skin.
+Event management platform showcase for the LBMA portfolio. Conferences, weddings, fundraisers, workshops, art openings, brand launches, and fitness retreats — same toolkit, different skin.
 
-**Live at:** _staging URL pending_
+EventDock is a sales-call demo. Click a role tile, run through the catalog, RSVP or buy a ticket, manage events, sync vendors, chat with the event AI. Every flow is fully functional in the browser — there is no real backend.
+
+---
 
 ## Visual archetype
 
 - **Archetype:** Playful illustrative (Eventbrite-meets-Notion)
-- **Type:** Bricolage Grotesque (display) + Manrope (text)
-- **Palette:** electric blue primary `#2563ff`, neon-yellow accent `#eaf53c`, off-white paper `#fafaf4`
+- **Type:** Bricolage Grotesque (display) + Manrope (body)
+- **Palette:** electric blue primary `#2563ff`, neon-yellow accent `#eaf53c`, off-white paper `#fafaf4`, ink `#12121b`
 - **Radius:** `rounded-2xl` to `rounded-3xl`
-- **Signature:** hard offset shadows in ink, springy framer-motion micro-interactions, light/dark via CSS vars
+- **Signature:** hard offset shadows in ink, springy framer-motion micro-interactions
+- **Modes:** light + dark via CSS variables
 
-## Run
+---
+
+## How it works
+
+There is no Firebase Auth, no Firestore, no Cloud Functions, no Stripe API, no Anthropic API. The whole demo runs in the browser:
+
+- **Auth:** role-tile picker on `/login`. Three roles, no password, no signup.
+- **Data:** localStorage under `eventdock:db:*`. Seed runs on first load via `eventdock:seeded:vN` sentinel.
+- **Stripe:** "Buy ticket" and tier upgrades open a Stripe-styled checkout modal that runs a 1.2s processing animation, writes the order locally with a card-last-4 stub, fires a confirmation into the outbox.
+- **AI features (Pro+ on the organizer side):**
+  - **Event copy writer** — opens in the event editor; streams 3 title options, a hero subheadline, full description, and 3 social variants from `src/lib/aiFixtures.ts` at ~36 chars/sec.
+  - **Attendee Q&A bot** — floating chat on the public event page. Keyword-matched fixture replies; out-of-scope questions are forwarded to the organizer's inbox as a real local-state action.
+- **Email outbox:** `src/lib/email.ts` writes to localStorage. Pre-seeded with a mix of confirmations, reminders, day-before notices, post-event thanks, refund approvals. Admin "Outbox" tab lists all of them; per-event reminders surface in the organizer's event manage view.
+- **Refunds:** attendees request from My events (within 24 hours of event start). Organizers see pending requests on the event manage page and approve in one click.
+- **Vendors:** organizer-side coordination on each event — status pills (invited / confirmed / declined), per-vendor task lists with due dates and overdue flags.
+
+Reset the demo from the link in the footer to start fresh.
+
+---
+
+## Roles
+
+Land on `/login` and pick:
+
+- **Sam Rivera · Attendee** — Browse the catalog, RSVP free, buy paid tickets, request refunds, chat with the event AI.
+- **Maya Chen · Organizer** — Run events end-to-end. Create events with the AI copy writer, manage guest list, run check-in, send reminders, manage vendors and tasks, approve refunds, upgrade subscription tier.
+- **Jordan Park · Admin** — Platform-wide stats, every event, feature/suspend, full transactional email log.
+
+---
+
+## Subscription tiers (organizer)
+
+- **Starter** — Free. One active event at a time, free RSVPs and paid ticketing, guest list, check-in, manual reminders.
+- **Pro** — $29/mo. Unlimited events, AI copy writer, AI Q&A bot, custom branding, scheduled reminders.
+- **Scale** — $99/mo. Team accounts, white-label public pages, priority refund processing, vendor coordination dashboard.
+
+Tier is set on the organization record in localStorage. Upgrades flow through the same Stripe-styled checkout modal as paid tickets.
+
+---
+
+## Run locally
 
 ```bash
 npm install
-npm run dev          # http://localhost:5173
-npm run build        # produces /dist
+npm run dev
 ```
 
-The demo is fully functional from a fresh clone — no Firebase emulator required. Demo data is seeded into `localStorage` on first load. The data layer (`src/lib/store.ts`) is shaped to mirror Firestore so swapping in the real SDK is a 1:1 change.
+Vite serves on `http://localhost:5173`. There is nothing else to run.
 
-To use Firebase emulators (config included):
+---
+
+## Deploy
+
+Two Firebase Hosting sites: `eventdock-lbma-staging` and `eventdock-lbma-prod`. Targets are pre-applied in `.firebaserc`.
 
 ```bash
-firebase emulators:start --project demo-eventdock --only auth,firestore,functions
+npm run deploy:staging   # → https://eventdock-lbma-staging.web.app
+npm run deploy:prod      # → https://eventdock-lbma-prod.web.app
 ```
 
-Hosting emulator runs on **port 5050** per project rule.
+Always staging first. Confirm at the staging URL, then prod.
 
-## Roles & demo accounts
+---
 
-Password for all demo accounts: **`demo1234`**
+## Tour
 
-| Role | Email | Name | What they see |
-|---|---|---|---|
-| attendee | `attendee@eventdock.demo` | Sam Rivera | Browse, RSVP, QR ticket, My events |
-| organizer | `organizer@eventdock.demo` | Maya Chen | Event creation, guest list, CSV export, check-in, reminders |
-| admin | `admin@eventdock.demo` | Jordan Park | Platform stats, all events, feature/suspend |
+First-run interactive walkthrough lives in `src/components/Tutorial.tsx`. Per-role:
 
-Login screen has one-click demo tiles for each role.
+- **Attendee** (5 steps): welcome, browse, my events, QR ticket explainer, done.
+- **Organizer** (5 steps): welcome, create event, guest list, mobile check-in, reminders.
+- **Admin** (5 steps): welcome, platform stats, events table, suspend/feature, done.
 
-## What's wired
+Storage key: `eventdock:tutorial_seen:<role>`. The Reset demo button clears these so the tour replays.
 
-- Email + Google sign in (Google is simulated — picks the organizer demo)
-- Public event pages at `/e/:slug` (no auth required to view)
-- RSVPs with QR-code tickets (`qrcode.react`)
-- Cancel RSVP from My events (custom confirm modal — no native dialogs)
-- Event creation form: title, date, capacity, ticket types, sessions, vendors
-- Guest list with search + CSV export
-- Mobile check-in screen with code entry, live attendance counters, recent log
-- Reminder emails (queued to a local outbox; Cloud Function/Resend payload shape matches)
-- Admin: feature/unfeature, suspend/reinstate, platform stats
-- 5 / 5 / 5 step spotlight tour per role with viewport clamping + mobile fallback
-- 404 + 500 designed pages
-- Light + dark theme via CSS vars
+---
 
-## Tour storage keys
+## Stack
 
-- `eventdock:tutorial_seen:attendee`
-- `eventdock:tutorial_seen:organizer`
-- `eventdock:tutorial_seen:admin`
-
-To reset seed data (also clears tour flags):
-
-```js
-// in browser devtools
-localStorage.clear(); location.reload();
-```
+React 19 + TypeScript + Vite, Tailwind, React Router v7, Zustand (auth state), react-hook-form + zod, Framer Motion, lucide-react, sonner, qrcode.react, date-fns, cmdk. Firebase Hosting only.

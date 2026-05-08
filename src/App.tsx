@@ -16,7 +16,9 @@ import Organize from './pages/Organize';
 import EventEditor from './pages/EventEditor';
 import EventManage from './pages/EventManage';
 import CheckIn from './pages/CheckIn';
+import Billing from './pages/Billing';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminOutbox from './pages/AdminOutbox';
 import NotFound from './pages/NotFound';
 import type { Role } from './lib/types';
 
@@ -50,14 +52,12 @@ function ShellLayout() {
 }
 
 export default function App() {
-  const auth = useAuth();
-
   useEffect(() => {
     ensureSeed();
-    auth.hydrate();
+    useAuth.getState().hydrate();
     const stored = localStorage.getItem('eventdock:theme');
     if (stored === 'dark') document.documentElement.classList.add('dark');
-  }, [auth]);
+  }, []);
 
   return (
     <ConfirmProvider>
@@ -74,8 +74,10 @@ export default function App() {
             <Route path="/app/organize" element={<RequireAuth allow={['organizer', 'admin']}><Organize /></RequireAuth>} />
             <Route path="/app/organize/new" element={<RequireAuth allow={['organizer', 'admin']}><EventEditor /></RequireAuth>} />
             <Route path="/app/organize/checkin" element={<RequireAuth allow={['organizer', 'admin']}><CheckIn /></RequireAuth>} />
+            <Route path="/app/organize/billing" element={<RequireAuth allow={['organizer', 'admin']}><Billing /></RequireAuth>} />
             <Route path="/app/organize/:id" element={<RequireAuth allow={['organizer', 'admin']}><EventManage /></RequireAuth>} />
             <Route path="/app/admin" element={<RequireAuth allow={['admin']}><AdminDashboard /></RequireAuth>} />
+            <Route path="/app/admin/outbox" element={<RequireAuth allow={['admin']}><AdminOutbox /></RequireAuth>} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
