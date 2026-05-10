@@ -1,18 +1,15 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Logo } from '../components/Logo';
 import { useAuth } from '../lib/auth';
 import { ArrowRight, Loader2, UserRound, Megaphone, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Role } from '../lib/types';
 
-const DEMO_PASSWORD = 'demo1234';
-
-const DEMO_LOGINS: { email: string; password: string; label: string; description: string; role: Role; icon: any; color: string }[] = [
-  { email: 'attendee@eventdock.demo', password: DEMO_PASSWORD, label: 'Sam Rivera', description: 'Attendee · find events', role: 'attendee', icon: UserRound, color: 'from-emerald-500 to-teal-500' },
-  { email: 'organizer@eventdock.demo', password: DEMO_PASSWORD, label: 'Maya Chen', description: 'Organizer · run events', role: 'organizer', icon: Megaphone, color: 'from-amber-500 to-orange-500' },
-  { email: 'admin@eventdock.demo', password: DEMO_PASSWORD, label: 'Jordan Park', description: 'Admin · platform control', role: 'admin', icon: ShieldCheck, color: 'from-indigo-500 to-violet-500' },
+const DEMO_LOGINS: { id: string; email: string; label: string; description: string; role: Role; icon: any; color: string }[] = [
+  { id: 'u_attendee', email: 'attendee@eventdock.demo', label: 'Sam Rivera', description: 'Attendee · find events', role: 'attendee', icon: UserRound, color: 'from-emerald-500 to-teal-500' },
+  { id: 'u_organizer', email: 'organizer@eventdock.demo', label: 'Maya Chen', description: 'Organizer · run events', role: 'organizer', icon: Megaphone, color: 'from-amber-500 to-orange-500' },
+  { id: 'u_admin', email: 'admin@eventdock.demo', label: 'Jordan Park', description: 'Admin · platform control', role: 'admin', icon: ShieldCheck, color: 'from-indigo-500 to-violet-500' },
 ];
 
 const routeFor = (r: Role) => (r === 'admin' ? '/app/admin' : r === 'organizer' ? '/app/organize' : '/app');
@@ -29,7 +26,9 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      const u = await auth.signIn(email, password);
+      const match = DEMO_LOGINS.find((d) => d.email.toLowerCase() === email.trim().toLowerCase());
+      if (!match) throw new Error('No account with that email. Use a one-click demo above.');
+      const u = auth.signInAs(match.id);
       toast.success(`Welcome back, ${u.name.split(' ')[0]}`);
       nav(routeFor(u.role));
     } catch (err) {
@@ -41,10 +40,10 @@ export default function Login() {
 
   async function onDemoLogin(d: (typeof DEMO_LOGINS)[number]) {
     setEmail(d.email);
-    setPassword(d.password);
+    setPassword('demo1234');
     setDemoLoading(d.email);
     try {
-      const u = await auth.signIn(d.email, d.password);
+      const u = auth.signInAs(d.id);
       toast.success(`Signed in as ${u.name}`);
       nav(routeFor(u.role));
     } catch (err) {
