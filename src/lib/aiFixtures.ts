@@ -1,6 +1,6 @@
 /**
  * Local AI simulation. Streams fixture text at ~30–50 chars/sec via setInterval
- * so the UX feels real. No Anthropic SDK calls.
+ * so the UX feels real. No live LLM calls.
  */
 import type { EventDoc, EventCategory } from './types';
 

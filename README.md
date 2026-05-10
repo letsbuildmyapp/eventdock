@@ -19,7 +19,7 @@ EventDock is a sales-call demo. Click a role tile, run through the catalog, RSVP
 
 ## How it works
 
-There is no Firebase Auth, no Firestore, no Cloud Functions, no Stripe API, no Anthropic API. The whole demo runs in the browser:
+There is no Firebase Auth, no Firestore, no Cloud Functions, no Stripe API, no an LLM API. The whole demo runs in the browser:
 
 - **Auth:** role-tile picker on `/login`. Three roles, no password, no signup.
 - **Data:** localStorage under `eventdock:db:*`. Seed runs on first load via `eventdock:seeded:vN` sentinel.
